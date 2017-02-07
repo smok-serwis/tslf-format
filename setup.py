@@ -9,7 +9,7 @@ setup(name=u'tslf-format',
       author=u'DMS Serwis s.c.',
       author_email=u'piotrm@smok.co',
       url=u'https://github.com/smok-serwis/tslf-format',
-      download_url='https://github.com/smok-serwis/tslf-format/archive/v0.1.zip',
+      download_url='https://github.com/smok-serwis/tslf-format/archive/master.zip',
       packages=[
           'tslfformat',
           'tslfformat.framing',
