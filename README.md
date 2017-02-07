@@ -1,6 +1,9 @@
 tslf-format
 ===========
 
+[![Build Status](https://travis-ci.org/smok-serwis/tslf-format.svg)](https://travis-ci.org/smok-serwis/tslf-format)
+[![license](https://img.shields.io/github/license/mashape/apistatus.svg)]()
+
 A TSLF framer/writer/manager
 
 TSLF, or Time Series Logging Format, is:
