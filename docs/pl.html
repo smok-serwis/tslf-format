@@ -34,7 +34,7 @@
 <p>Po bajcie typu segmentu są dwa bajty długości stringa z nazwą ścieżki, a następnie kod. Jego długość zależy od typu.</p>
 <h2>0x03 - ustaw czas zero</h2>
 <p>Jeśli jest ustawiony czas zero, to jest on dodawany do każdego timestampa dalej. Jest on w milisekundach, wyrażony jako 8 bajt&oacute;w UNIX timestamp w milisekundach. Dzięki temu możemy stosować kr&oacute;tsze timestampy.</p>
-<h2>0x04 - 0x07 - wartość ścieżki (r&oacute;żne kodowania ścieżki)</h2>
+<h2>0x04 - 0x06 - wartość ścieżki (r&oacute;żne kodowania ścieżki)</h2>
 <p>Warianty to:</p>
 <ul>
 <li><strong>0x04</strong> - nazwa ścieżki to kr&oacute;tki kod 1 bajtowy</li>
@@ -54,30 +54,20 @@
 <th>1</th>
 <th>0</th></tr>
 <tr>
-<td>
-<p>&nbsp;</p></td>
+<td colspan="3">
+<p>000 - wartość (lub ekstra info o błędzie) jest pusta<br />001 - w. (lub. e.i o b.) jest prefiksowane 1 bajtem długości<br /><span>010 - w. (lub. e.i o b.) jest prefiksowane 2 bajtami długości</span>&nbsp;<br />011 - <span>w. (lub. e.i o b.) jest prefiksowane 4 bajtami długości</span><span>&nbsp;</span>&nbsp;<br />100 - <span>w. (lub. e.i o b.) ma 1 bajt<br /><span>101 - </span><span>w. (lub. e.i o b.) ma 2 bajty<br /><span>110 - </span><span>w. (lub. e.i o b.) ma 4 bajy<br />111<span> - </span><span>w. (lub. e.i o b.) ma 8 bajt&oacute;w</span></span></span></span></p></td>
 <td colspan="2">
-<p><u>Q</u></p>
-<p>&nbsp;</p></td>
-<td colspan="2">
-<p>00 - odczyt zawiera wartość<br />01 - jest to błędny odczyt, <em>malformed</em><br />01 - jest to błędny odczyt,&nbsp;<em>timeout<br /></em>01 - jest to błędny odczyt,&nbsp;<em>invalid</em></p></td>
+<p>00 - odczyt zawiera wartość<br />01 - jest to błędny odczyt, <em>malformed</em><br />10 - jest to błędny odczyt,&nbsp;<em>timeout<br /></em>11 - jest to błędny odczyt,&nbsp;<em>invalid</em></p></td>
 <td><span>0 - timestamp jest w milisekundach</span><br /><span>1 - timestamp jest w sekundach&nbsp;</span></td>
 <td colspan="2">
 <p>00 - timestamp ma 32 bity<br />01 - timestamp ma 24 bity<br />10 - timestamp ma 16 bit&oacute;w<br />11 - timestamp ma 64 bity&nbsp;</p></td></tr></tbody></table>
 <p>Następnie leci timestamp. Jest od dodawany do bieżącego czasu zero.</p>
 <p>Następnie idzie kr&oacute;tki kod.</p>
-<p>Jeśli odczyt zawiera wartość, to na podstawie <ac:link><ri:page ri:content-title="Sensor i ścieżka" /><ac:plain-text-link-body><![CDATA[typu ścieżki]]></ac:plain-text-link-body></ac:link> określa się następnie, co jest potem:</p>
-<ul>
-<li><strong>B</strong> - 1 bajt</li>
-<li><strong>w</strong>,&nbsp;<strong>W</strong>&nbsp;- 2 bajty (opcjonalnie kodowanie U2)</li>
-<li><strong>f</strong>,&nbsp;<strong>d</strong> - zgodnie z IEEE 754</li>
-<li><strong>u</strong> - oznaczenie długości i bajty w kodowaniu UTF8. Teraz jeśli&nbsp;<u>Q</u> wynosi:<br />
-<ul>
-<li><strong>00</strong>: długość ma 1 bajt</li>
-<li><strong>01</strong>: długość ma 2 bajty</li>
-<li><strong>10</strong>: długość ma 4 bajty</li>
-<li><strong>11</strong>: wartość jest pusta</li></ul></li></ul>
-<p>Jeśli odczyt jest błędny, to czytamy jak gdyby&nbsp;<strong>u</strong> i to są dodatkowe informacje o błędzie.</p>
+<p>Następnie (jeśli deskryptor) tego wymaga, długość wartości lub ekstra informacji o błędzie, jeśli to błędny odczyt.&nbsp;</p>
+<p>Potem idzie sama wartość. Interpretuj jak chcesz.</p>
+<p>&nbsp;</p>
+<h2>0x07 - a chuj go wie</h2>
+<p>...</p>
 <h2>0x08 - do konkretnego timestampu uznaj wartości za zsynchronizowane</h2>
 <p>Żeby za każdym uploadem nie walić nowego pliku, jest taka opcja. Oznacza ona, że wartości o timestampie mniejszym lub r&oacute;wnym podanemu tutaj są zsynchronizowane.</p>
 <p>Ten pakiet nie nazywa się &quot;do tego miejsca&quot;, bo wtedy synchronizacja blokowałaby zapis nowych wartości.</p>

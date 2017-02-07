@@ -19,3 +19,9 @@ This is compatible with:
 * Python 2.7
 * Python 3.x
 * PyPy
+
+# What's this
+A TSLF file is a two dimensional map of (tag::utf8, timestamp::qword) => value::binary,
+sorted by timestamp.
+
+Tags are means to be reused many times, and therefore are compressed with a form of RLE.
