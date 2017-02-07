@@ -1,0 +1,90 @@
+<!-- machine exported from Confluence, where this doc is kept -->
+<p>TSLF to taka krzyż&oacute;wka bazy danych i journala odczytanych wartości prowadzone przez klienta longshot. Są bardzo proste, niewielkie,&nbsp;<em>crash-safe</em>,&nbsp;<em>append-only</em> i mogą być bezpośrednio wysyłane do serwera. Efektywnie plik TSLF jest listą krotek ścieżka-odcisk czasowy-wartość.</p><ac:structured-macro ac:macro-id="6966c971-d780-451a-9b47-2260a15195e4" ac:name="info" ac:schema-version="1"><ac:rich-text-body>
+<p>Chujowe te obowiązkowe długości, strata miejsca taka.</p></ac:rich-text-body></ac:structured-macro>
+<p>&nbsp;</p>
+<p><ac:structured-macro ac:macro-id="047e99a7-130b-4124-87a4-476d700b698a" ac:name="toc" ac:schema-version="1" /></p>
+<p>Działamy tak, że odczytane dane appendujemy do danego pliku TSLF. Gdy przychodzi czas wysłania, otwieramy nowy i tam wrzucamy zapisy, a stary wysyłamy do serwera.</p>
+<p>Kolejność to big endian (poza długością nagł&oacute;wka segmentu). Bity numerujemy od 0 (najmłodszy)</p>
+<h1>Słowniczek</h1>
+<ul>
+<li><strong>baza danych</strong> (<em>database</em>) - katalog z plikami TSLF. Nie może mieć innych plik&oacute;w</li>
+<li><strong>plik TSLF</strong>&nbsp;- plik o nazwie będącej nieujemną liczbą całkowitą (bez rozszerzenia)</li>
+<li><strong>lider</strong> (<em>leader</em>) - plik TSLF do kt&oacute;rego obecnie zapisujemy</li></ul>
+<p>&nbsp;</p>
+<h1>Format</h1>
+<p>Format pliku TSLF można opisać następująco w pseudokodzie:</p>
+<blockquote>
+<pre>TSLF_file := {</pre>
+<pre>    byte[12] manifest = {&quot;TSLFFORMAT00&quot;}<br />    dword extra_header_data_length;<br />    byte[extra_header_data_length] extra_header_data;</pre>
+<pre>    segment[] segments;</pre>
+<pre>}</pre>
+<pre>segment :=&nbsp;{</pre>
+<pre>    byte segment_type<br />    byte[] segment_data;</pre>
+<pre>}</pre></blockquote>
+<p><em>segment_data</em> r&oacute;żni się w zależności od rodzaju segmentu, opisywanego przez&nbsp;<em>segment_data</em>.&nbsp;</p>
+<h2>0x00 - 0x02: Nadaj ścieżce kr&oacute;tki kod.</h2>
+<p>Ścieżce można nadać kr&oacute;tki ID liczbowy, aby TSLF nie był taki wielgachny. Duże TSLF prowadzą do większego zużycia flash na klientach. Za pomocą takiego kodu można się potem odwoływać do ścieżek, zamiast walić całego stringa. Ba, rzecz jest tak powszechna, że nie da się inaczej! Aby użyć ścieżki, trzeba ją wcześniej zdefiniować. Narzut jest żaden (max. 5 bajt&oacute;w), a odczyt prostszy.</p>
+<p>Dokładny typ segmentu określa parametr definicji:</p>
+<p>Następny bajt określa parametr definicji:</p>
+<ul>
+<li><strong>0x00</strong>&nbsp;oznacza że będzie to 1-bajtowy kod</li>
+<li><strong>0x01</strong>&nbsp;oznacza że będze to 2-bajtowy kod</li>
+<li><strong>0x02</strong>&nbsp;oznacza że będzie to 4-bajtowy kod</li></ul>
+<p>Liczy się zar&oacute;wno wartość jak i typ.&nbsp;<strong>0x01</strong>&nbsp;to nie to samo co&nbsp;<strong>0x0001</strong>.</p>
+<p>Po bajcie typu segmentu są dwa bajty długości stringa z nazwą ścieżki, a następnie kod. Jego długość zależy od typu.</p>
+<h2>0x03 - ustaw czas zero</h2>
+<p>Jeśli jest ustawiony czas zero, to jest on dodawany do każdego timestampa dalej. Jest on w milisekundach, wyrażony jako 8 bajt&oacute;w UNIX timestamp w milisekundach. Dzięki temu możemy stosować kr&oacute;tsze timestampy.</p>
+<h2>0x04 - 0x07 - wartość ścieżki (r&oacute;żne kodowania ścieżki)</h2>
+<p>Warianty to:</p>
+<ul>
+<li><strong>0x04</strong> - nazwa ścieżki to kr&oacute;tki kod 1 bajtowy</li>
+<li><strong>0x05</strong>&nbsp;- nazwa ścieżki to kr&oacute;tki kod 2 bajtowy</li>
+<li><strong>0x06</strong>&nbsp;- nazwa ścieżki to kr&oacute;tki kod 4 bajtowy</li></ul>
+<p>Po bajcie typu następuje bajt deskryptora:</p>
+<p>&nbsp;</p>
+<table>
+<tbody>
+<tr>
+<th>7</th>
+<th>6</th>
+<th>5</th>
+<th>4</th>
+<th>3</th>
+<th>2</th>
+<th>1</th>
+<th>0</th></tr>
+<tr>
+<td>
+<p>&nbsp;</p></td>
+<td colspan="2">
+<p><u>Q</u></p>
+<p>&nbsp;</p></td>
+<td colspan="2">
+<p>00 - odczyt zawiera wartość<br />01 - jest to błędny odczyt, <em>malformed</em><br />01 - jest to błędny odczyt,&nbsp;<em>timeout<br /></em>01 - jest to błędny odczyt,&nbsp;<em>invalid</em></p></td>
+<td><span>0 - timestamp jest w milisekundach</span><br /><span>1 - timestamp jest w sekundach&nbsp;</span></td>
+<td colspan="2">
+<p>00 - timestamp ma 32 bity<br />01 - timestamp ma 24 bity<br />10 - timestamp ma 16 bit&oacute;w<br />11 - timestamp ma 64 bity&nbsp;</p></td></tr></tbody></table>
+<p>Następnie leci timestamp. Jest od dodawany do bieżącego czasu zero.</p>
+<p>Następnie idzie kr&oacute;tki kod.</p>
+<p>Jeśli odczyt zawiera wartość, to na podstawie <ac:link><ri:page ri:content-title="Sensor i ścieżka" /><ac:plain-text-link-body><![CDATA[typu ścieżki]]></ac:plain-text-link-body></ac:link> określa się następnie, co jest potem:</p>
+<ul>
+<li><strong>B</strong> - 1 bajt</li>
+<li><strong>w</strong>,&nbsp;<strong>W</strong>&nbsp;- 2 bajty (opcjonalnie kodowanie U2)</li>
+<li><strong>f</strong>,&nbsp;<strong>d</strong> - zgodnie z IEEE 754</li>
+<li><strong>u</strong> - oznaczenie długości i bajty w kodowaniu UTF8. Teraz jeśli&nbsp;<u>Q</u> wynosi:<br />
+<ul>
+<li><strong>00</strong>: długość ma 1 bajt</li>
+<li><strong>01</strong>: długość ma 2 bajty</li>
+<li><strong>10</strong>: długość ma 4 bajty</li>
+<li><strong>11</strong>: wartość jest pusta</li></ul></li></ul>
+<p>Jeśli odczyt jest błędny, to czytamy jak gdyby&nbsp;<strong>u</strong> i to są dodatkowe informacje o błędzie.</p>
+<h2>0x08 - do konkretnego timestampu uznaj wartości za zsynchronizowane</h2>
+<p>Żeby za każdym uploadem nie walić nowego pliku, jest taka opcja. Oznacza ona, że wartości o timestampie mniejszym lub r&oacute;wnym podanemu tutaj są zsynchronizowane.</p>
+<p>Ten pakiet nie nazywa się &quot;do tego miejsca&quot;, bo wtedy synchronizacja blokowałaby zapis nowych wartości.</p>
+<p>Po tym segmencie idzie timestamp w milisekundach, 64-bitowy.</p>
+<p>Nie dodaje się tutaj czasu zero.</p>
+<p>&nbsp;</p>
+<h1>Przemyślenia</h1>
+<p>Najkr&oacute;tszy możliwy segment z wartością to</p>
+<pre>0x06 0x02 0x12 TT TT 0x00 VV</pre>
+<p>Zakładając że kr&oacute;tki kod 0x00 koduje ścieżkę typu boolean. Ma on 6 bajt&oacute;w.</p>
