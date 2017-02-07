@@ -14,7 +14,12 @@ class TSLFDirectory(object):
     """
     Manage a bunch of TSLF files
 
-    Should be a singleton per path
+    Should be a singleton per path.
+
+    Public instance properties:
+
+        .done_files :   names of files (sans path) that will not be written to anymore
+        .leader     :   SingleFileWriter instance - current file to write to
     """
 
     def __init__(self, path):
@@ -55,6 +60,16 @@ class TSLFDirectory(object):
             self.done_files = [six.text_type(n) for n in as_ints]
 
         self.leader = SingleFileWriter(os.path.join(path, self.leader_name))
+
+    def mark_as_synced(self, fname):
+        """
+        Mark file named fname, one of done files, as synced.
+
+        This means - delete it.
+        :raise ValueError: fname is not a done file
+        """
+        self.done_files.remove(fname)
+        os.unlink(os.path.join(self.path, fname))
 
     def rotate(self):
         """

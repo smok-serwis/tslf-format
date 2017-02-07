@@ -6,7 +6,7 @@ import os
 import io
 import os.path
 from tslfformat.framing import BaseSegment
-
+from tslfformat.reading.readresume import get_short_codes_from_tslf
 logger = logging.getLogger(__name__)
 
 
@@ -14,7 +14,7 @@ class SingleFileWriter(object):
     """
     Writes to a single TSLF file.
 
-    This does not handle flushing.
+    This does not handle flushing, but supports short codes and tzero
     """
 
     def __init__(self, path):
@@ -26,13 +26,22 @@ class SingleFileWriter(object):
         :param path: path to file. If does not exist, will be created.
         """
 
-        if os.path.exists(path) and os.stat(path).st_size >= 16:
-            # check for both existence, and that header was successfully written out
-            self.file = io.open(path, 'ab')
-        else:
+        self.sc8_map = {}   # path name => 8 bit short code
+        self.sc16_map = {}   # path name => 16 bit short code
+        self.sc32_map = {}   # path name => 32 bit short code
+        self.t_zero = 0     # tzero, in millis
+
+        if not (os.path.exists(path) and os.stat(path).st_size >= 16):
             self.file = open(path, 'wb')
             self.file.write(b'TSLFFORMAT00\x00\x00\x00\x00')
             self.sync()
+        else:
+            # retrieve all short codes, we might need them
+            ps = get_short_codes_from_tslf(path)
+
+            self.sc8_map, self.sc16_map, self.sc32_map, self.t_zero = ps.map8, ps.map16, ps.map32, ps.t_zero
+
+            self.file = open(path, 'ab')
 
     def write_segments(self, *args):
         """
